@@ -14,7 +14,7 @@
     "url": "git+https://github.com/sm1ke-dev/express-mesto-gha.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Anatoly Gudoshnikov, Yandex Practicum student",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/sm1ke-dev/express-mesto-gha/issues"
