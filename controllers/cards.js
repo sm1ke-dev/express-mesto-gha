@@ -23,18 +23,30 @@ const createCard = (req, res) => {
 };
 
 const deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
-    .orFail(() => {
-      throw new Error('"id" is not found');
-    })
-    .then((cards) => res.send({ data: cards }))
-    .catch((err) => {
-      if (err.message === '"id" is not found') {
-        res.status(NOT_FOUND).send({ message: 'Карточка с указанным id не найдена' });
-      } else if (err.name === 'CastError') {
-        res.status(BAD_REQUEST).send({ message: 'Некорректно введенный id' });
+  Card.findById(req.params.cardId)
+    .then((card) => {
+      if (card.owner.toString() === req.user._id) {
+        Card.findByIdAndRemove(req.params.cardId)
+          .orFail(() => {
+            throw new Error('"id" is not found');
+          })
+          .then((cards) => res.send({ data: cards }))
+          .catch((err) => {
+            if (err.message === '"id" is not found') {
+              res.status(NOT_FOUND).send({ message: 'Карточка с указанным id не найдена' });
+            } else if (err.name === 'CastError') {
+              res.status(BAD_REQUEST).send({ message: 'Некорректно введенный id' });
+            } else {
+              res.status(INTERNAL_SERVER_ERROR).send({ message: 'Что-то пошло не так' });
+            }
+          });
       } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Что-то пошло не так' });
+        return Promise.reject(new Error('Not user card'));
+      }
+    })
+    .catch((err) => {
+      if (err.message === 'Not user card') {
+        res.status(BAD_REQUEST).send({ message: 'Вы не можете удалить чужую карточку' });
       }
     });
 };

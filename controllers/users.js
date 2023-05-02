@@ -1,7 +1,9 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const { BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR } = require('../utils/errors');
+const {
+  BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR, CONFLICT_REQUEST,
+} = require('../utils/errors');
 const User = require('../models/user');
 
 const getUsers = (req, res) => {
@@ -36,18 +38,12 @@ const createUser = (req, res) => {
     .then((hash) => User.create({
       name, about, avatar, email, password: hash,
     }))
-    .then((user) => res.send({
-      data: {
-        name: user.name,
-        about: user.about,
-        avatar: user.avatar,
-        email: user.email,
-        _id: user._id,
-      },
-    }))
+    .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(BAD_REQUEST).send({ message: 'Некорректно заполненные данные' });
+      } else if (err.code === 11000) {
+        res.status(CONFLICT_REQUEST).send({ message: 'Пользователь с таким Email уже существует' });
       } else {
         res.status(INTERNAL_SERVER_ERROR).send({ message: 'Что-то пошло не так' });
       }
@@ -98,6 +94,23 @@ const updateAvatar = (req, res) => {
     });
 };
 
+const getMyInfo = (req, res) => {
+  User.findById(req.user._id)
+    .orFail(() => {
+      throw new Error('"id" is not found');
+    })
+    .then((user) => res.send({ data: user }))
+    .catch((err) => {
+      if (err.message === '"id" is not found') {
+        res.status(NOT_FOUND).send({ message: 'Пользователь по указанному id не найден' });
+      } else if (err.name === 'CastError') {
+        res.status(BAD_REQUEST).send({ message: 'Некорректно введенный id' });
+      } else {
+        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Что-то пошло не так' });
+      }
+    });
+};
+
 const login = (req, res) => {
   const { email, password } = req.body;
 
@@ -120,5 +133,6 @@ module.exports = {
   createUser,
   updateProfile,
   updateAvatar,
+  getMyInfo,
   login,
 };
