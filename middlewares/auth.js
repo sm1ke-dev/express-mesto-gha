@@ -1,9 +1,9 @@
 const jwt = require('jsonwebtoken');
-const { NotFoundError, UnauthorizedError } = require('../utils/errors');
+const { UnauthorizedError } = require('../utils/errors');
 
 module.exports = (req, res, next) => {
   if (!req.cookies.jwt) {
-    return next(new NotFoundError('Токен не найден'));
+    return next(new UnauthorizedError('Токен не найден'));
   }
 
   let payload;

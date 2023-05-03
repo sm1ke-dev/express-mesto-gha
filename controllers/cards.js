@@ -31,11 +31,13 @@ const deleteCard = (req, res, next) => {
     })
     .then((card) => {
       if (card.owner.toString() === req.user._id) {
-        Card.deleteOne({ _id: req.params.cardId })
+        Card.findByIdAndRemove(req.params.cardId)
           .then((deletedCard) => res.send({ data: deletedCard }))
           .catch(next);
+      } else {
+        return Promise.reject(new ForbiddenError('Вы не можете удалить чужую карточку'));
       }
-      return Promise.reject(new ForbiddenError('Вы не можете удалить чужую карточку'));
+      return card;
     })
     .catch(next);
 };

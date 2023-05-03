@@ -4,7 +4,6 @@ const cookieParser = require('cookie-parser');
 const { celebrate, Joi, errors } = require('celebrate');
 const { createUser, login } = require('./controllers/users');
 const auth = require('./middlewares/auth');
-const NotFoundError = require('./utils/errors');
 const { REGEX_URL } = require('./utils/constants');
 
 const { PORT = 3000 } = process.env;
@@ -34,14 +33,11 @@ app.post('/signup', celebrate({
 app.use('/users', auth, require('./routes/users'));
 app.use('/cards', auth, require('./routes/cards'));
 
-app.use('*', (req, res, next) => {
-  next(new NotFoundError('Страница не найдена'));
-});
+app.use('*', require('./routes/404'));
 
 app.use(errors());
 
 app.use((err, req, res, next) => {
-  console.log('err.statusCode =>', err.statusCode);
   const { statusCode = 500, message } = err;
 
   res.status(statusCode).send({
