@@ -1,8 +1,8 @@
-const BAD_REQUEST = 400;
-const NOT_FOUND = 404;
-const INTERNAL_SERVER_ERROR = 500;
-const CONFLICT_REQUEST = 409;
+const NotFoundError = require('./errors/not-found-err');
+const BadRequestError = require('./errors/bad-request-err');
+const UnauthorizedError = require('./errors/unauthorized-err');
+const ConflictingRequestError = require('./errors/conflicting-request-err');
 
 module.exports = {
-  BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR, CONFLICT_REQUEST,
+  NotFoundError, BadRequestError, UnauthorizedError, ConflictingRequestError,
 };

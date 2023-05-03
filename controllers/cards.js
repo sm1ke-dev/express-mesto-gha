@@ -1,13 +1,15 @@
-const { BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR } = require('../utils/errors');
+const {
+  NotFoundError, BadRequestError, UnauthorizedError,
+} = require('../utils/errors');
 const Card = require('../models/card');
 
-const getCards = (req, res) => {
+const getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.send({ data: cards }))
-    .catch(() => res.status(INTERNAL_SERVER_ERROR).send({ message: 'Что-то пошло не так' }));
+    .catch(next);
 };
 
-const createCard = (req, res) => {
+const createCard = (req, res, next) => {
   const { name, link } = req.body;
 
   Card.create({ name, link, owner: req.user._id })
@@ -15,14 +17,14 @@ const createCard = (req, res) => {
     .then((card) => res.send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BAD_REQUEST).send({ message: 'Некорректно заполненные данные' });
-      } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Что-то пошло не так' });
+        throw new BadRequestError('Некорректно заполненные данные');
       }
-    });
+      throw err;
+    })
+    .catch(next);
 };
 
-const deleteCard = (req, res) => {
+const deleteCard = (req, res, next) => {
   Card.findById(req.params.cardId)
     .then((card) => {
       if (card.owner.toString() === req.user._id) {
@@ -33,25 +35,27 @@ const deleteCard = (req, res) => {
           .then((cards) => res.send({ data: cards }))
           .catch((err) => {
             if (err.message === '"id" is not found') {
-              res.status(NOT_FOUND).send({ message: 'Карточка с указанным id не найдена' });
-            } else if (err.name === 'CastError') {
-              res.status(BAD_REQUEST).send({ message: 'Некорректно введенный id' });
-            } else {
-              res.status(INTERNAL_SERVER_ERROR).send({ message: 'Что-то пошло не так' });
+              throw new NotFoundError('Карточка с указанным id не найдена');
+            } if (err.name === 'CastError') {
+              throw BadRequestError('Некорректно введенный id');
             }
-          });
+            throw err;
+          })
+          .catch(next);
       } else {
         return Promise.reject(new Error('Not user card'));
       }
     })
     .catch((err) => {
       if (err.message === 'Not user card') {
-        res.status(BAD_REQUEST).send({ message: 'Вы не можете удалить чужую карточку' });
+        throw new UnauthorizedError('Вы не можете удалить чужую карточку');
       }
-    });
+      throw err;
+    })
+    .catch(next);
 };
 
-const likeCard = (req, res) => {
+const likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
@@ -64,16 +68,16 @@ const likeCard = (req, res) => {
     .then((card) => res.send({ data: card }))
     .catch((err) => {
       if (err.message === '"id" is not found') {
-        res.status(NOT_FOUND).send({ message: 'Карточка с указанным id не найдена' });
-      } else if (err.name === 'CastError') {
-        res.status(BAD_REQUEST).send({ message: 'Некорректно введенный id' });
-      } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Что-то пошло не так' });
+        throw new NotFoundError('Карточка с указанным id не найдена');
+      } if (err.name === 'CastError') {
+        throw new BadRequestError('Некорректно введенный id');
       }
-    });
+      throw err;
+    })
+    .catch(next);
 };
 
-const dislikeCard = (req, res) => {
+const dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
@@ -85,13 +89,13 @@ const dislikeCard = (req, res) => {
     .then((card) => res.send({ data: card }))
     .catch((err) => {
       if (err.message === '"id" is not found') {
-        res.status(NOT_FOUND).send({ message: 'Карточка с указанным id не найдена' });
-      } else if (err.name === 'CastError') {
-        res.status(BAD_REQUEST).send({ message: 'Некорректно введенный id' });
-      } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Что-то пошло не так' });
+        throw new NotFoundError('Карточка с указанным id не найдена');
+      } if (err.name === 'CastError') {
+        throw new BadRequestError('Некорректно введенный id');
       }
-    });
+      throw err;
+    })
+    .catch(next);
 };
 
 module.exports = {
