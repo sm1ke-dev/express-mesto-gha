@@ -5,6 +5,7 @@ const Card = require('../models/card');
 
 const getCards = (req, res, next) => {
   Card.find({})
+    .populate(['owner', 'likes'])
     .then((cards) => res.send({ data: cards }))
     .catch(next);
 };
@@ -12,16 +13,15 @@ const getCards = (req, res, next) => {
 const createCard = (req, res, next) => {
   const { name, link } = req.body;
 
-  Card.create({ name, link, owner: req.user._id })
+  Card.create({ name, link, owner: req.cookies.user._id })
     .then((card) => card.populate('owner'))
     .then((card) => res.status(201).send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        throw new BadRequestError('Некорректно заполненные данные');
+        next(new BadRequestError('Некорректно заполненные данные'));
       }
-      throw err;
-    })
-    .catch(next);
+      next(err);
+    });
 };
 
 const deleteCard = (req, res, next) => {
@@ -30,7 +30,7 @@ const deleteCard = (req, res, next) => {
       throw new NotFoundError('Карточка с указанным id не найдена');
     })
     .then((card) => {
-      if (card.owner.toString() === req.user._id) {
+      if (card.owner.toString() === req.cookies.user._id) {
         Card.findByIdAndRemove(req.params.cardId)
           .then((deletedCard) => res.send({ data: deletedCard }))
           .catch(next);
@@ -45,7 +45,7 @@ const deleteCard = (req, res, next) => {
 const likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
-    { $addToSet: { likes: req.user._id } },
+    { $addToSet: { likes: req.cookies.user._id } },
     { new: true },
   )
     .orFail(() => {
@@ -59,7 +59,7 @@ const likeCard = (req, res, next) => {
 const dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
-    { $pull: { likes: req.user._id } },
+    { $pull: { likes: req.cookies.user._id } },
     { new: true },
   )
     .orFail(() => {

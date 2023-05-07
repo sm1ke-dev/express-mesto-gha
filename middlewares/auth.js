@@ -14,6 +14,9 @@ module.exports = (req, res, next) => {
     return next(new UnauthorizedError('Необходима авторизация'));
   }
 
-  req.user = payload;
+  res.cookie('user', payload, {
+    maxAge: 3600000 * 24 * 7,
+    httpOnly: true,
+  });
   return next();
 };
