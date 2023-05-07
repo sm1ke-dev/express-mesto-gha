@@ -45,7 +45,7 @@ const createUser = (req, res, next) => {
 const updateProfile = (req, res, next) => {
   const { name, about } = req.body;
 
-  User.findByIdAndUpdate(req.cookies.user._id, { name, about }, { new: true, runValidators: true })
+  User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
         throw new NotFoundError('Пользователь по указанному id не найден');
@@ -59,7 +59,7 @@ const updateProfile = (req, res, next) => {
 const updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
 
-  User.findByIdAndUpdate(req.cookies.user._id, { avatar }, { new: true, runValidators: true })
+  User.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
         throw new NotFoundError('Пользователь по указанному id не найден');
@@ -71,7 +71,7 @@ const updateAvatar = (req, res, next) => {
 };
 
 const getMyInfo = (req, res, next) => {
-  User.findById(req.cookies.user._id)
+  User.findById(req.user._id)
     .orFail(() => {
       throw new NotFoundError('Пользователь по указанному id не найден');
     })
