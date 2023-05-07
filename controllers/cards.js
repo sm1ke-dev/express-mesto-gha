@@ -34,10 +34,8 @@ const deleteCard = (req, res, next) => {
         Card.findByIdAndRemove(req.params.cardId)
           .then((deletedCard) => res.send({ data: deletedCard }))
           .catch(next);
-      } else {
-        return Promise.reject(new ForbiddenError('Вы не можете удалить чужую карточку'));
       }
-      return card;
+      return Promise.reject(new ForbiddenError('Вы не можете удалить чужую карточку'));
     })
     .catch(next);
 };
